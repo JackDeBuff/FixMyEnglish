@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FixMyEnglish</title>
+<meta name="description" content="Paste a sentence, pick a style, get three native-quality rewrites.">
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --surface-2: #f1f1ee;
+    --text: #1c1c1a;
+    --muted: #6f6f68;
+    --border: #e3e3de;
+    --accent: #3557d4;
+    --accent-text: #ffffff;
+    --accent-soft: #e8edfc;
+    --best: #1b7f4d;
+    --best-soft: #e4f4eb;
+    --danger: #b3372f;
+    --danger-soft: #fbeae8;
+    --shadow: 0 1px 2px rgba(20, 20, 15, .05), 0 8px 24px -12px rgba(20, 20, 15, .12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413;
+      --surface: #1e1e1c;
+      --surface-2: #262624;
+      --text: #ececea;
+      --muted: #9d9d95;
+      --border: #33332f;
+      --accent: #7a95f0;
+      --accent-text: #10131f;
+      --accent-soft: #232b45;
+      --best: #5fc78e;
+      --best-soft: #1c2f25;
+      --danger: #e8837b;
+      --danger-soft: #362220;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 44rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+
+  header { margin-bottom: 1.75rem; }
+  .wordmark { font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; margin: 0; }
+  .wordmark .fix { color: var(--accent); }
+  .tagline { color: var(--muted); margin: .3rem 0 0; font-size: .95rem; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 1.1rem;
+  }
+  textarea {
+    width: 100%;
+    min-height: 7.5rem;
+    resize: vertical;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    padding: .25rem .25rem .5rem;
+  }
+  textarea::placeholder { color: var(--muted); opacity: .8; }
+
+  .counter { font-size: .78rem; color: var(--muted); text-align: right; margin: 0 .25rem .5rem; }
+  .counter.over { color: var(--danger); }
+
+  .modes { display: flex; flex-wrap: wrap; gap: .4rem; padding: .65rem 0; border-top: 1px solid var(--border); }
+  .pill {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 999px;
+    padding: .32rem .8rem;
+    font: inherit;
+    font-size: .87rem;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .pill:hover { border-color: var(--accent); }
+  .pill[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+  }
+  .mode-blurb { font-size: .82rem; color: var(--muted); margin: .1rem .15rem .5rem; min-height: 1.2em; }
+
+  .extra { margin: .2rem 0 .4rem; }
+  .extra input {
+    width: 100%;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 10px;
+    padding: .55rem .75rem;
+    font: inherit;
+    font-size: .9rem;
+    outline: none;
+  }
+  .extra input:focus { border-color: var(--accent); }
+  .hidden { display: none !important; }
+
+  .row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .5rem; }
+  .ctx-toggle {
+    background: none; border: none; padding: .25rem 0; cursor: pointer;
+    color: var(--muted); font: inherit; font-size: .87rem;
+    display: inline-flex; align-items: center; gap: .3rem;
+  }
+  .ctx-toggle:hover { color: var(--text); }
+  .ctx-toggle svg { transition: transform .18s; }
+  .ctx-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+  .fix-btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: var(--accent); color: var(--accent-text);
+    border: none; border-radius: 12px;
+    padding: .6rem 1.3rem;
+    font: inherit; font-size: .95rem; font-weight: 650;
+    cursor: pointer;
+    transition: filter .15s, transform .05s;
+  }
+  .fix-btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .fix-btn:active:not(:disabled) { transform: translateY(1px); }
+  .fix-btn:disabled { opacity: .6; cursor: default; }
+  .spin { animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error {
+    display: flex; align-items: flex-start; gap: .55rem;
+    background: var(--danger-soft); color: var(--danger);
+    border-radius: 12px; padding: .75rem 1rem;
+    margin-top: 1rem; font-size: .92rem;
+  }
+  .error svg { flex: none; margin-top: .15rem; }
+
+  .results { margin-top: 1.5rem; display: grid; gap: .8rem; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: .95rem 1.05rem .85rem;
+    box-shadow: var(--shadow);
+    animation: rise .25s ease both;
+  }
+  .card:nth-child(2) { animation-delay: .06s; }
+  .card:nth-child(3) { animation-delay: .12s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  .card.best { border-color: color-mix(in srgb, var(--best) 45%, var(--border)); }
+  .card-top { display: flex; align-items: center; gap: .6rem; margin-bottom: .45rem; }
+  .badge {
+    font-size: .72rem; font-weight: 700; letter-spacing: .02em;
+    padding: .14rem .55rem; border-radius: 999px;
+    background: var(--best-soft); color: var(--best);
+  }
+  .rank { font-size: .78rem; color: var(--muted); font-weight: 600; }
+  .copy {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: var(--surface-2); color: var(--muted);
+    border: 1px solid var(--border); border-radius: 9px;
+    padding: .3rem .65rem; font: inherit; font-size: .8rem; cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .copy:hover { color: var(--text); border-color: var(--accent); }
+  .copy.done { color: var(--best); border-color: var(--best); }
+  .fixed-text { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 1.02rem; }
+  .why { margin: .5rem 0 0; font-size: .84rem; color: var(--muted); }
+
+  footer { margin-top: 3rem; font-size: .8rem; color: var(--muted); }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="wordmark"><span class="fix">Fix</span>MyEnglish</h1>
+    <p class="tagline">Paste it, pick a vibe, get three native-quality versions.</p>
+  </header>
+
+  <main>
+    <div class="panel">
+      <textarea id="text" maxlength="1000" autofocus
+        placeholder="Type or paste your English here — a text, an email, a caption, anything…"></textarea>
+      <div class="counter" id="counter">0 / 1000</div>
+
+      <div class="modes" id="modes" role="group" aria-label="Style mode"></div>
+      <p class="mode-blurb" id="mode-blurb"></p>
+
+      <div class="extra hidden" id="custom-wrap">
+        <input id="custom" maxlength="120" placeholder="Describe your target style, e.g. “polite but firm email to my landlord”">
+      </div>
+      <div class="extra hidden" id="ctx-wrap">
+        <input id="context" maxlength="200" placeholder="Optional context, e.g. “replying to my boss about a deadline”">
+      </div>
+
+      <div class="row">
+        <button class="ctx-toggle" id="ctx-toggle" aria-expanded="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          Add context
+        </button>
+        <button class="fix-btn" id="fix">
+          <svg id="fix-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4m2-2h-4"/><circle cx="4" cy="20" r="2"/></svg>
+          <span id="fix-label">Fix it</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="error hidden" id="error">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+      <span id="error-text"></span>
+    </div>
+
+    <div class="results" id="results" aria-live="polite"></div>
+  </main>
+
+  <footer>
+    Runs on the <a href="https://oit.duke.edu/service/ai-gateway/" rel="noopener">Duke AI Gateway</a> · built for CYBERSEC 590
+  </footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const state = { mode: "casual", modes: [] };
+
+const ICONS = {
+  copy: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+  check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+  spinner: '<svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>',
+};
+
+async function loadModes() {
+  const res = await fetch("/api/modes");
+  state.modes = await res.json();
+  const box = $("modes");
+  for (const m of state.modes) {
+    const b = document.createElement("button");
+    b.className = "pill";
+    b.textContent = m.label;
+    b.dataset.id = m.id;
+    b.setAttribute("aria-pressed", String(m.id === state.mode));
+    b.addEventListener("click", () => selectMode(m.id));
+    box.appendChild(b);
+  }
+  updateBlurb();
+}
+
+function selectMode(id) {
+  state.mode = id;
+  document.querySelectorAll(".pill").forEach(p =>
+    p.setAttribute("aria-pressed", String(p.dataset.id === id)));
+  $("custom-wrap").classList.toggle("hidden", id !== "custom");
+  if (id === "custom") $("custom").focus();
+  updateBlurb();
+}
+
+function updateBlurb() {
+  const m = state.modes.find(m => m.id === state.mode);
+  $("mode-blurb").textContent = m ? m.blurb : "";
+}
+
+$("counter").textContent = "0 / 1000";
+$("text").addEventListener("input", () => {
+  const n = $("text").value.length;
+  $("counter").textContent = `${n} / 1000`;
+  $("counter").classList.toggle("over", n >= 1000);
+});
+$("text").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); fix(); }
+});
+
+$("ctx-toggle").addEventListener("click", () => {
+  const open = $("ctx-toggle").getAttribute("aria-expanded") === "true";
+  $("ctx-toggle").setAttribute("aria-expanded", String(!open));
+  $("ctx-wrap").classList.toggle("hidden", open);
+  if (!open) $("context").focus();
+});
+
+function showError(msg) {
+  $("error-text").textContent = msg;
+  $("error").classList.remove("hidden");
+}
+
+const SPARKLES = document.getElementById("fix-icon").outerHTML;
+
+function setLoading(on) {
+  $("fix").disabled = on;
+  $("fix-label").textContent = on ? "Fixing…" : "Fix it";
+  $("fix-icon").outerHTML = on
+    ? ICONS.spinner.replace("<svg", '<svg id="fix-icon"')
+    : SPARKLES;
+}
+
+async function fix() {
+  const text = $("text").value.trim();
+  $("error").classList.add("hidden");
+  if (!text) { $("text").focus(); return; }
+  if (state.mode === "custom" && !$("custom").value.trim()) {
+    showError("Describe your custom style first.");
+    $("custom").focus();
+    return;
+  }
+  setLoading(true);
+  try {
+    const res = await fetch("/api/fix", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text,
+        mode: state.mode,
+        custom_style: $("custom").value.trim() || null,
+        context: $("context").value.trim() || null,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Something went wrong — try again.");
+    render(data.results);
+  } catch (err) {
+    $("results").replaceChildren();
+    showError(err.message || "Something went wrong — try again.");
+  } finally {
+    setLoading(false);
+  }
+}
+$("fix").addEventListener("click", fix);
+
+function render(results) {
+  const box = $("results");
+  box.replaceChildren();
+  results.forEach((r, i) => {
+    const card = document.createElement("div");
+    card.className = "card" + (i === 0 ? " best" : "");
+    const top = document.createElement("div");
+    top.className = "card-top";
+    if (i === 0) {
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = "Best fit";
+      top.appendChild(badge);
+    } else {
+      const rank = document.createElement("span");
+      rank.className = "rank";
+      rank.textContent = `Option ${i + 1}`;
+      top.appendChild(rank);
+    }
+    const copy = document.createElement("button");
+    copy.className = "copy";
+    copy.setAttribute("aria-label", `Copy option ${i + 1}`);
+    copy.innerHTML = ICONS.copy + "<span>Copy</span>";
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(r.text);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = r.text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      copy.classList.add("done");
+      copy.innerHTML = ICONS.check + "<span>Copied</span>";
+      setTimeout(() => {
+        copy.classList.remove("done");
+        copy.innerHTML = ICONS.copy + "<span>Copy</span>";
+      }, 1600);
+    });
+    top.appendChild(copy);
+
+    const p = document.createElement("p");
+    p.className = "fixed-text";
+    p.textContent = r.text;
+    const why = document.createElement("p");
+    why.className = "why";
+    why.textContent = r.why;
+
+    card.append(top, p, why);
+    box.appendChild(card);
+  });
+}
+
+loadModes().catch(() => showError("Couldn't load style modes — refresh the page."));
+</script>
+</body>
+</html>
