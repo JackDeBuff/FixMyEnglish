@@ -47,9 +47,15 @@ docker build -t fixmyenglish . && docker run --env-file .env -p 7860:7860 fixmye
 - The Dockerfile must keep working with plain `docker build` + `docker run`
   (another 5 points): port **7860**, non-root user (HF requirement),
   `.env` never baked into the image (`.dockerignore` handles it).
-- Deploy = push this same repo to both GitHub and the HF Space git remote.
-  The README frontmatter (`sdk: docker`, `app_port: 7860`) **is** the Space
-  config — don't strip it for GitHub aesthetics.
+- Deploy = GitHub for the graded repo + **Cloudflare Containers** for the live
+  demo (`cd cloudflare && npx wrangler deploy` — builds the same root
+  Dockerfile; secret via `wrangler secret put`). HF Spaces was the original
+  plan and is dead: Docker/Gradio Spaces on free CPU now require PRO (402) —
+  the README documents this. Live URL: fixmyenglish.supawich.workers.dev.
+- **Never verify a workers.dev URL with curl from this sandbox** — the
+  sandbox egress proxy sits on Cloudflare and every `*.workers.dev` request
+  returns 404 `error code: 1042` regardless of the site's real state. Use the
+  Browser pane. (Cost an hour and a false "your subdomain is broken" claim.)
 
 ## Gotchas already paid for
 

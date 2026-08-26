@@ -1,14 +1,6 @@
----
-title: FixMyEnglish
-emoji: ✨
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 7860
-pinned: false
----
-
 # FixMyEnglish
+
+**Live demo:** <https://fixmyenglish.supawich.workers.dev>
 
 Paste any English text, pick the register you need, and get **three ranked
 rewrites** — each with a one-line note on why it fits — plus one-click copy.
@@ -48,8 +40,8 @@ Then open <http://localhost:7860>.
 
 ## Configuration — environment only
 
-No secrets in source. Locally they come from `.env` (gitignored); on the
-Hugging Face Space, from Space secrets.
+No secrets in source. Locally they come from `.env` (gitignored); in the live
+deployment, from a Cloudflare Worker secret passed into the container's env.
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -62,6 +54,23 @@ Hugging Face Space, from Space secrets.
 
 The rate limit and daily cap exist because this is a public app fronting a
 metered key — a small abuse-protection layer suited to a security course.
+
+## Deployment — and why it's not a Hugging Face Space
+
+The original plan was a Hugging Face **Docker Space** — same Dockerfile for
+grading and hosting. That plan died on contact with reality: as of August 2026,
+HF returns `402 Payment Required` on Space creation —
+
+> "Static Spaces are free for everyone, but hosting Gradio and Docker Spaces
+> on free cpu-basic requires a PRO subscription."
+
+So the free tier that made Spaces the course-friendly default no longer covers
+app Spaces at all. Instead, the live demo runs the **same unmodified
+Dockerfile** on [Cloudflare Containers](https://developers.cloudflare.com/containers/):
+a tiny Worker ([cloudflare/src/index.ts](cloudflare/src/index.ts)) routes
+requests to one container instance, `DUKE_AI_GATEWAY_KEY` lives in a Worker
+secret, and the container scales to zero when idle. Deploy is
+`npx wrangler deploy` from [cloudflare/](cloudflare/).
 
 ## How it works
 
