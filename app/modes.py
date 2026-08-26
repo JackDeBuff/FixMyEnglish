@@ -98,8 +98,8 @@ MODES: dict[str, Mode] = {
         ),
         Mode(
             id="aave",
-            label="Black English",
-            blurb="AAVE — authentic, not caricature",
+            label="AAVE",
+            blurb="African American Vernacular English — authentic, not caricature",
             style_card=(
                 "Target: African American Vernacular English (AAVE) — a rule-governed "
                 "variety of English with its own consistent grammar.\n"

@@ -13,7 +13,8 @@ all the same way is itself a mistake: in a casual text, adding capital letters
 and full stops makes it *worse*. FixMyEnglish knows the difference.
 
 **Modes:** Casual (default) · LinkedIn · IELTS Band 9 · Gen Z · Professional ·
-Black English (AAVE) · Academic · Custom (describe your own target style).
+AAVE (African American Vernacular English) · Academic · Custom (describe your
+own target style).
 An optional context field ("replying to my landlord about a broken heater")
 steers all three versions.
 
