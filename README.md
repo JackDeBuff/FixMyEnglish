@@ -1,6 +1,8 @@
 # FixMyEnglish
 
 **Live demo:** <https://fixmyenglish.supawich.workers.dev>
+*(if that URL shows "There is nothing here yet", Cloudflare is still
+propagating the hostname — run it locally or with Docker below instead)*
 
 Paste any English text, pick the register you need, and get **three ranked
 rewrites** — each with a one-line note on why it fits — plus one-click copy.
