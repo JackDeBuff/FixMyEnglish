@@ -20,8 +20,11 @@ Duke course (20 pts); also deployed live as a Hugging Face **Docker** Space.
 - **Casual/Gen Z modes must NOT "correct" texting style.** Lowercase,
   missing periods, abbreviations are the register, not errors — this is the
   owner's original spec and the app's whole point. Any prompt edit must keep it.
-- **AAVE mode is authentic-or-nothing.** It's a rule-governed variety; wording
-  in `modes.py` was chosen to avoid caricature. Don't loosen it.
+- **AAVE mode is expressive-but-authentic** (owner's spec, revised 2026-08-26:
+  he asked for more colorful, bolder output). The hard lines that remain: no
+  slurs ever (n-word in any form), no eye-dialect respellings, no minstrel
+  phrasing — fluent-speaker-with-personality, not costume. LinkedIn mode is
+  deliberately full satire (same-day decision); don't "professionalize" it back.
 
 ## Layout
 

@@ -35,16 +35,20 @@ MODES: dict[str, Mode] = {
         Mode(
             id="linkedin",
             label="LinkedIn",
-            blurb="Polished, engaging LinkedIn voice",
+            blurb="Full thought-leader theatrics",
             style_card=(
-                "Target: a LinkedIn post or comment that reads as credible and engaging.\n"
-                "- Professional but human — confident first person, active voice, short "
-                "punchy sentences mixed with longer ones.\n"
-                "- Light storytelling energy is welcome; corporate buzzword soup "
-                "(synergy, leverage, circle back) is not.\n"
-                "- Proper capitalization and punctuation. Emoji: at most one, only if "
-                "the input already had that energy.\n"
-                "- The goal: something a sharp professional would actually post."
+                "Target: the satirical LinkedIn-influencer voice — the meme version of "
+                "LinkedIn, played completely straight.\n"
+                "- Full thought-leader theatrics: a dramatic hook, storytelling gravitas, "
+                "humble-brag energy, a lessons-learned pivot, and an engagement-bait "
+                "closer ('Agree?', 'Thoughts?', 'Let that sink in.').\n"
+                "- Corporate buzzwords are now the point: journey, grateful, humbled, "
+                "leverage, growth mindset. A few emoji and #Hashtags welcome.\n"
+                "- Dramatize and inflate the TONE as far as it can go, but the underlying "
+                "facts stay the user's own — reframe their event as a life lesson, don't "
+                "invent new events.\n"
+                "- The goal: reads like a viral LinkedIn parody post built from the "
+                "user's sentence."
             ),
         ),
         Mode(
@@ -102,16 +106,25 @@ MODES: dict[str, Mode] = {
             blurb="African American Vernacular English — authentic, not caricature",
             style_card=(
                 "Target: African American Vernacular English (AAVE) — a rule-governed "
-                "variety of English with its own consistent grammar.\n"
-                "- Use genuine AAVE grammatical features where they fit naturally: "
-                "habitual 'be', copula absence, completive 'done', negative concord, "
-                "ain't, remote-past 'been' (stressed).\n"
-                "- Vocabulary and phrasing should be current and natural, never "
-                "minstrel-y, dated, or exaggerated. If unsure, understate.\n"
+                "variety of English with its own consistent grammar — written in its "
+                "most expressive, informal register (group-chat, talking-with-your-"
+                "people energy).\n"
+                "- Use the full feature set confidently where it fits: habitual 'be', "
+                "copula absence, completive 'done', remote-past 'been' (stressed), "
+                "negative concord, ain't, finna/tryna, expressive intensifiers, and "
+                "current idiom. Don't water it down to one token feature.\n"
+                "- Colorful and vivid beats cautious. Amplifying the emotion with "
+                "idiomatic emphasis ('on god', 'I'm not even playing', 'stg', 'deadass', "
+                "rhetorical heat) is part of this register — it counts as tone, NOT as "
+                "adding information, so use it freely where the feeling fits.\n"
+                "- Colorful the way a fluent speaker actually talks, never stage "
+                "dialect: no eye-dialect respellings ('dat', 'dem'), no dated minstrel "
+                "phrasing, and absolutely no slurs (including the n-word in any form "
+                "or spelling).\n"
                 "- Keep the casual texting conventions of the input (lowercase etc.) "
                 "unless the content is formal.\n"
-                "- The goal: how a real AAVE speaker would put it — respectful, "
-                "authentic, zero caricature."
+                "- The goal: a real fluent AAVE speaker with personality — bold, "
+                "natural, zero caricature."
             ),
         ),
         Mode(
