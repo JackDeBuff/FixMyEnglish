@@ -1,8 +1,6 @@
 # FixMyEnglish
 
 **Live demo:** <https://fixmyenglish.supawich.workers.dev>
-*(if that URL shows "There is nothing here yet", Cloudflare is still
-propagating the hostname — run it locally or with Docker below instead)*
 
 Paste any English text, pick the register you need, and get **three ranked
 rewrites** — each with a one-line note on why it fits — plus one-click copy.
@@ -85,5 +83,17 @@ secret, and the container scales to zero when idle. Deploy is
 
 ## AI Assistance
 
-<!-- Written by me (Jack), per the course citation policy: tool, model,
-     timestamp, what the AI did, and what I did/decided. -->
+*Per the course citation policy — tool, model, timestamp, and the human/AI split.*
+
+**Tool & model:** Claude Code with Claude Fable 5 (Anthropic), Aug 26–27, 2026.
+
+1. All of the ideas and decisions are mine. The frontend, the API call, the
+   Dockerfile, and the deployments were drafted by Claude; I directed the work
+   and the bug fixing as the project manager (like a boss).
+2. I rewrote the style options and the phrasing of how each mode's
+   instructions should behave.
+3. The demo video was recorded by me, from a script I drafted; Claude produced
+   the AI voiceover (edge-tts, Microsoft "Andrew" neural voice) and timed it
+   to the footage.
+4. And finally, this AI Assistance section was written by me (and, fittingly,
+   grammar-checked with Claude).
