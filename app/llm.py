@@ -10,6 +10,9 @@ from .modes import style_card_for
 
 GATEWAY_BASE_URL = os.environ.get("GATEWAY_BASE_URL", "https://litellm.oit.duke.edu/v1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-5.6-luna")
+# Optional provider-specific request params as JSON, e.g. '{"reasoning_effort": "low"}'
+# for reasoning models whose default effort turns a 5-second grammar fix into 30.
+EXTRA_BODY = json.loads(os.environ.get("LLM_EXTRA_BODY") or "{}")
 
 _client: OpenAI | None = None
 
@@ -80,6 +83,7 @@ def fix_text(
             {"role": "user", "content": user_msg},
         ],
         response_format={"type": "json_object"},
+        extra_body=EXTRA_BODY or None,
         timeout=60,
     )
     return _parse(response.choices[0].message.content or "")

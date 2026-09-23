@@ -52,9 +52,20 @@ deployment, from a Cloudflare Worker secret passed into the container's env.
 | `RATE_LIMIT_PER_MIN` | `10` | Per-IP sliding-window limit |
 | `DAILY_CAP` | `300` | Global rolling-24h request cap |
 | `MAX_INPUT_CHARS` | `1000` | Input length limit |
+| `LLM_EXTRA_BODY` | — | Optional JSON merged into the request, e.g. `{"reasoning_effort": "low"}` for reasoning models |
 
 The rate limit and daily cap exist because this is a public app fronting a
 metered key — a small abuse-protection layer suited to a security course.
+
+**Provider note (Sept 2026):** the app is provider-agnostic — any
+OpenAI-compatible endpoint works via the three variables above. After Duke's
+September LiteLLM outage, `litellm.oit.duke.edu` stopped answering from
+outside Duke's network, so the live demo currently runs on
+[Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/)
+(`@cf/zai-org/glm-5.3-flash`, `reasoning_effort: low`) with no code changes
+— see `cloudflare/wrangler.jsonc`. Local runs still default to the Duke
+Gateway; flipping the live demo back is deleting those two vars and one
+secret.
 
 ## Deployment — and why it's not a Hugging Face Space
 

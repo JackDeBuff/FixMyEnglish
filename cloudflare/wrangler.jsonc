@@ -6,6 +6,13 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-01",
   "observability": { "enabled": true },
+  // Provider override while litellm.oit.duke.edu is unreachable off-campus (Sept 2026).
+  // Remove these two vars (and the LLM_API_KEY secret) to return to the Duke Gateway.
+  "vars": {
+    "GATEWAY_BASE_URL": "https://api.cloudflare.com/client/v4/accounts/c16fa88f21cff530d60475dc28c00e7e/ai/v1",
+    "MODEL_NAME": "@cf/zai-org/glm-5.3-flash",
+    "LLM_EXTRA_BODY": "{\"reasoning_effort\": \"low\"}"
+  },
   "containers": [
     {
       "class_name": "FixMyEnglishContainer",
