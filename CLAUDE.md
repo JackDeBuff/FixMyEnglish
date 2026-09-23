@@ -1,11 +1,28 @@
 # FixMyEnglish — CYBERSEC 590 Assignment 1
 
-Paste English text → pick a register mode → one call to the Duke AI Gateway →
-three ranked rewrites with why-notes and copy buttons. Graded artifact for a
-Duke course (20 pts); also deployed live as a Hugging Face **Docker** Space.
-[README.md](README.md) is the authority on running/config;
-[assignment1.md](assignment1.md) is the rubric. Full decision history:
-`~/.claude/plans/nevermind-i-have-my-bubbly-planet.md`.
+Paste English text → pick a register mode → one call to an OpenAI-compatible
+LLM endpoint (Duke AI Gateway by design) → three ranked rewrites with why-notes
+and copy buttons. Graded artifact for a Duke course (20 pts), **submitted
+2026-08-27**; deployed live at fixmyenglish.supawich.workers.dev as a Cloudflare
+Container running the same Dockerfile. [README.md](README.md) is the authority
+on running/config; [assignment1.md](assignment1.md) is the rubric. Full
+decision history: `~/.claude/plans/nevermind-i-have-my-bubbly-planet.md`.
+
+## Where things stand (update this when it changes)
+
+- **Assignment: submitted and graded-as-is.** Any change now is maintenance,
+  not rubric work — keep the graded surface (lockfile, Dockerfile, app) stable.
+- **Duke AI Gateway: unreachable from off-campus since the 2026-09-07 outage.**
+  Dashboard works, keys regenerate fine, but `litellm.oit.duke.edu` TCP-times-
+  out from home and from Cloudflare. Three fresh keys changed nothing — it is
+  network reachability, not auth. OIT never posted a restoration notice.
+- **Live demo runs on Cloudflare Workers AI** (`@cf/zai-org/glm-5.3-flash`)
+  as a stand-in — details under Run / verify. Local dev still defaults to Duke.
+- **Next step (planned 2026-09-24):** Jack tests the Gateway from campus Wi-Fi:
+  `uv run python scripts/probe_gateway.py` — a `200` on campus but a timeout at
+  home means the API is now Duke-network-only; a timeout on campus too means
+  it is still down. Either way he then emails **aisuitesupport@duke.edu**
+  (draft already given). Don't re-diagnose from scratch — run the probe.
 
 ## Standing rules (owner's instructions — do not drift)
 
