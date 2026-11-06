@@ -3,25 +3,25 @@ import { Container } from "@cloudflare/containers";
 interface Env {
   FIXMYENGLISH: DurableObjectNamespace<FixMyEnglishContainer>;
   DUKE_AI_GATEWAY_KEY: string;
-  // Optional provider override (set in wrangler.jsonc vars + a secret) while the
-  // Duke Gateway is unreachable from outside Duke's network. The container app
-  // itself is provider-agnostic: it only reads these three env vars.
-  GATEWAY_BASE_URL?: string;
-  MODEL_NAME?: string;
-  LLM_API_KEY?: string;
-  LLM_EXTRA_BODY?: string;
+  // Fallback provider, used by the app only when the Duke Gateway fails
+  // (vars in wrangler.jsonc, FALLBACK_API_KEY is a secret).
+  FALLBACK_BASE_URL?: string;
+  FALLBACK_MODEL?: string;
+  FALLBACK_EXTRA_BODY?: string;
+  FALLBACK_API_KEY?: string;
 }
 
 export class FixMyEnglishContainer extends Container<Env> {
   defaultPort = 7860;
   sleepAfter = "15m";
-  enableInternet = true; // outbound call to the LLM provider
+  enableInternet = true; // outbound calls to the LLM providers
   envVars = Object.fromEntries(
     Object.entries({
-      DUKE_AI_GATEWAY_KEY: this.env.LLM_API_KEY || this.env.DUKE_AI_GATEWAY_KEY,
-      GATEWAY_BASE_URL: this.env.GATEWAY_BASE_URL,
-      MODEL_NAME: this.env.MODEL_NAME,
-      LLM_EXTRA_BODY: this.env.LLM_EXTRA_BODY,
+      DUKE_AI_GATEWAY_KEY: this.env.DUKE_AI_GATEWAY_KEY,
+      FALLBACK_BASE_URL: this.env.FALLBACK_BASE_URL,
+      FALLBACK_MODEL: this.env.FALLBACK_MODEL,
+      FALLBACK_EXTRA_BODY: this.env.FALLBACK_EXTRA_BODY,
+      FALLBACK_API_KEY: this.env.FALLBACK_API_KEY,
     }).filter(([, v]) => v !== undefined),
   ) as Record<string, string>;
 }

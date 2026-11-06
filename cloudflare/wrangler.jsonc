@@ -6,12 +6,12 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-01",
   "observability": { "enabled": true },
-  // Provider override while litellm.oit.duke.edu is unreachable off-campus (Sept 2026).
-  // Remove these two vars (and the LLM_API_KEY secret) to return to the Duke Gateway.
+  // Primary = Duke AI Gateway (DUKE_AI_GATEWAY_KEY secret). If a Duke call fails,
+  // the app retries once on Cloudflare Workers AI (FALLBACK_API_KEY secret).
   "vars": {
-    "GATEWAY_BASE_URL": "https://api.cloudflare.com/client/v4/accounts/c16fa88f21cff530d60475dc28c00e7e/ai/v1",
-    "MODEL_NAME": "@cf/zai-org/glm-5.3-flash",
-    "LLM_EXTRA_BODY": "{\"reasoning_effort\": \"low\"}"
+    "FALLBACK_BASE_URL": "https://api.cloudflare.com/client/v4/accounts/c16fa88f21cff530d60475dc28c00e7e/ai/v1",
+    "FALLBACK_MODEL": "@cf/zai-org/glm-5.3-flash",
+    "FALLBACK_EXTRA_BODY": "{\"reasoning_effort\": \"low\"}"
   },
   "containers": [
     {

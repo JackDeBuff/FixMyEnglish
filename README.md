@@ -18,7 +18,8 @@ steers all three versions.
 
 Built for **CYBERSEC 590, Assignment 1** at Duke. One model call per fix
 through the [Duke AI Gateway](https://oit.duke.edu/service/ai-gateway/)
-(OpenAI-compatible), default model `gpt-5.6-luna`.
+(OpenAI-compatible), default model `gpt-6-luna`, with an optional fallback
+provider when the Gateway can't be reached.
 
 ## Run it
 
@@ -47,25 +48,34 @@ deployment, from a Cloudflare Worker secret passed into the container's env.
 | Variable | Default | Purpose |
 |---|---|---|
 | `DUKE_AI_GATEWAY_KEY` | — (required) | API key from the Duke AI Dashboard |
-| `MODEL_NAME` | `gpt-5.6-luna` | Any model the Gateway serves |
+| `MODEL_NAME` | `gpt-6-luna` | Any model the Gateway serves |
 | `GATEWAY_BASE_URL` | `https://litellm.oit.duke.edu/v1` | OpenAI-compatible endpoint |
 | `RATE_LIMIT_PER_MIN` | `10` | Per-IP sliding-window limit |
 | `DAILY_CAP` | `300` | Global rolling-24h request cap |
 | `MAX_INPUT_CHARS` | `1000` | Input length limit |
 | `LLM_EXTRA_BODY` | — | Optional JSON merged into the request, e.g. `{"reasoning_effort": "low"}` for reasoning models |
+| `FALLBACK_BASE_URL` / `FALLBACK_API_KEY` / `FALLBACK_MODEL` | — | Optional second OpenAI-compatible provider, tried when a Gateway call fails |
+| `FALLBACK_EXTRA_BODY` | — | Like `LLM_EXTRA_BODY`, for the fallback |
+| `PRIMARY_COOLDOWN_S` | `600` | After a Gateway failure, skip it for this long when a fallback is set |
 
 The rate limit and daily cap exist because this is a public app fronting a
 metered key — a small abuse-protection layer suited to a security course.
 
-**Provider note (Sept 2026):** the app is provider-agnostic — any
-OpenAI-compatible endpoint works via the three variables above. After Duke's
-September LiteLLM outage, `litellm.oit.duke.edu` stopped answering from
-outside Duke's network, so the live demo currently runs on
+**Provider fallback:** every fix tries the Duke AI Gateway first (5-second
+connect timeout, no retries). If that call fails and a fallback is configured,
+the same request goes to the fallback provider, and the Gateway is skipped for
+10 minutes so a dead primary doesn't slow every request. The API response
+names the provider that answered (`"provider": "primary"` or `"fallback"`).
+
+Locally and in `docker run` the Gateway answers, so the fallback normally sits
+idle. The live demo on Cloudflare falls back every time: after Duke's September
+2026 LiteLLM outage, the Gateway answers home connections and Cloudflare's WARP
+addresses but times out from Cloudflare's server network (both Workers and
+Containers). Containers also have IPv6-only egress, and the Gateway has no IPv6
+address. The live demo's fallback is
 [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/)
-(`@cf/zai-org/glm-5.3-flash`, `reasoning_effort: low`) with no code changes
-— see `cloudflare/wrangler.jsonc`. Local runs still default to the Duke
-Gateway; flipping the live demo back is deleting those two vars and one
-secret.
+(`@cf/zai-org/glm-5.3-flash`, `reasoning_effort: low`); see
+`cloudflare/wrangler.jsonc`.
 
 ## Deployment — and why it's not a Hugging Face Space
 

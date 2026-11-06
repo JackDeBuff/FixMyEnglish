@@ -61,11 +61,11 @@ def fix(body: FixRequest, request: Request) -> JSONResponse:
         return JSONResponse({"error": refusal}, status_code=429)
 
     try:
-        results = llm.fix_text(body.text, body.mode, body.custom_style, body.context)
+        results, provider = llm.fix_text(body.text, body.mode, body.custom_style, body.context)
     except Exception:
         log.exception("fix failed")
         return JSONResponse(
             {"error": "The model call failed — please try again in a moment."},
             status_code=502,
         )
-    return JSONResponse({"results": results})
+    return JSONResponse({"results": results, "provider": provider})

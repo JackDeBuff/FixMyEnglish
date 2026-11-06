@@ -12,14 +12,17 @@ decision history: `~/.claude/plans/nevermind-i-have-my-bubbly-planet.md`.
 
 - **Assignment: submitted and graded-as-is.** Any change now is maintenance,
   not rubric work — keep the graded surface (lockfile, Dockerfile, app) stable.
-- **Duke AI Gateway: back as of 2026-11-06.** After the 2026-09-07 outage it
-  was unreachable off-campus for ~2 months (dashboard worked, API host
-  TCP-timed-out). On Nov 6 `scripts/probe_gateway.py` from Jack's home network
-  (Spectrum, not Duke) returned 200 with 41 models listed, and a real chat call
-  succeeded. The current key in `.env` works.
-- **Live demo still runs on Cloudflare Workers AI** (`@cf/zai-org/glm-5.3-flash`)
-  until Jack decides whether to switch it back to Duke. To switch back, see
-  Run / verify. Local dev uses Duke.
+- **Duke AI Gateway: back as of 2026-11-06, for most networks.** It answers
+  home ISPs and Cloudflare WARP addresses, but still times out from Cloudflare's
+  server network. Tested 2026-11-06: a Worker `fetch` to it returned 522 after
+  about 20s, and Containers egress over IPv6 only while the Gateway has no IPv6
+  address. A relay through the Worker (`outboundByHost`) was tried and doesn't
+  help, because the Worker can't reach Duke either. Don't retry it.
+- **The app is Duke-first with a fallback** (`app/llm.py`, 2026-11-06): primary
+  = Duke (`gpt-6-luna`, 5s connect timeout, no retries); on any failure it tries
+  `FALLBACK_*` and skips Duke for `PRIMARY_COOLDOWN_S` (600s). The API response
+  carries `"provider"`. Local/Docker: primary answers. Live demo: fallback
+  (Workers AI GLM-5.3 Flash) every time, for the network reason above.
 
 ## Standing rules (owner's instructions — do not drift)
 
@@ -47,7 +50,7 @@ One FastAPI app, no frameworks on the frontend:
 | File | Job |
 |---|---|
 | `app/modes.py` | The 8 modes; each carries a `style_card` injected into the system prompt. Add a mode = add one entry here, nothing else. |
-| `app/llm.py` | OpenAI client → `GATEWAY_BASE_URL` (default Duke `litellm.oit.duke.edu/v1`), strict-JSON prompt, fence-stripping parser. `MODEL_NAME` env (default `gpt-5.6-luna`); `LLM_EXTRA_BODY` JSON is merged into each request (used for `reasoning_effort`). Provider-agnostic on purpose. |
+| `app/llm.py` | Primary provider (`GATEWAY_BASE_URL`, default Duke; `MODEL_NAME`, default `gpt-6-luna`) then optional fallback (`FALLBACK_*`), with a cooldown on primary failure. Strict-JSON prompt, fence-stripping parser. `LLM_EXTRA_BODY` / `FALLBACK_EXTRA_BODY` are JSON merged into requests (used for `reasoning_effort`). `fix_text` returns `(results, provider_name)`. |
 | `app/ratelimit.py` | In-memory per-IP 10/min + global 300/day. Public Space, metered key — that's why it exists. |
 | `app/main.py` | Routes: `/` (static), `/api/modes`, `POST /api/fix`. Client IP = first hop of `x-forwarded-for` (HF proxy). |
 | `app/static/index.html` | The whole UI, inline CSS/JS. Icons are inlined Lucide SVGs — no emoji as UI glyphs. |
@@ -69,18 +72,21 @@ docker build -t fixmyenglish . && docker run --env-file .env -p 7860:7860 fixmye
   Dockerfile; secret via `wrangler secret put`). HF Spaces was the original
   plan and is dead: Docker/Gradio Spaces on free CPU now require PRO (402) —
   the README documents this. Live URL: fixmyenglish.supawich.workers.dev.
-- **Live demo provider (since 2026-09-23): Cloudflare Workers AI**, not Duke.
-  Duke's LiteLLM host has been unreachable off-campus since the Sept 7 outage
-  (dashboard works, API host TCP-times-out from home AND from Cloudflare).
-  The switch is deploy-config only: `cloudflare/wrangler.jsonc` vars
-  `GATEWAY_BASE_URL` (Workers AI OpenAI-compatible endpoint), `MODEL_NAME`
-  (`@cf/zai-org/glm-5.3-flash`), `LLM_EXTRA_BODY` (`reasoning_effort: low` —
-  without it a fix takes ~30s of thinking instead of 5-12s), plus Worker
-  secret `LLM_API_KEY` (a Workers-AI-Read API token; the Worker maps it into
-  the container's `DUKE_AI_GATEWAY_KEY`). Free tier: 10k Neurons/day ≈ 690
-  fixes on this model; `DAILY_CAP=300` keeps it unbillable. To go back to
-  Duke: delete the vars + secret, redeploy. Check the OIT alert page before
-  re-diagnosing "gateway broken".
+- **Live demo config:** `cloudflare/wrangler.jsonc` vars `FALLBACK_BASE_URL`
+  (Workers AI OpenAI-compatible endpoint), `FALLBACK_MODEL`
+  (`@cf/zai-org/glm-5.3-flash`), `FALLBACK_EXTRA_BODY` (`reasoning_effort: low`;
+  without it a fix takes ~30s), plus Worker secrets `DUKE_AI_GATEWAY_KEY` and
+  `FALLBACK_API_KEY` (the Cloudflare token `fixmyenglish-workers-ai`,
+  Workers-AI-Read, rolled 2026-11-06). Free tier: 10k Neurons/day ≈ 690 fixes;
+  `DAILY_CAP=300` keeps it unbillable.
+- **A deploy that only changes the Worker does not restart the running
+  container**, so the container keeps its old env vars and its in-memory Duke
+  cooldown. To force a fresh instance, change container config (e.g. flip
+  `max_instances`) or the image. Check with `npx wrangler containers instances
+  <app-id>`: look at the CREATED column.
+- **Container stdout doesn't show up in `wrangler tail`**; only Worker logs do.
+  To see which provider served a live request, read `"provider"` in the
+  `/api/fix` response.
 - **Never verify a workers.dev URL with curl from this sandbox** — the
   sandbox egress proxy sits on Cloudflare and every `*.workers.dev` request
   returns 404 `error code: 1042` regardless of the site's real state. Use the
