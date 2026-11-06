@@ -12,17 +12,14 @@ decision history: `~/.claude/plans/nevermind-i-have-my-bubbly-planet.md`.
 
 - **Assignment: submitted and graded-as-is.** Any change now is maintenance,
   not rubric work — keep the graded surface (lockfile, Dockerfile, app) stable.
-- **Duke AI Gateway: unreachable from off-campus since the 2026-09-07 outage.**
-  Dashboard works, keys regenerate fine, but `litellm.oit.duke.edu` TCP-times-
-  out from home and from Cloudflare. Three fresh keys changed nothing — it is
-  network reachability, not auth. OIT never posted a restoration notice.
-- **Live demo runs on Cloudflare Workers AI** (`@cf/zai-org/glm-5.3-flash`)
-  as a stand-in — details under Run / verify. Local dev still defaults to Duke.
-- **Next step (planned 2026-09-24):** Jack tests the Gateway from campus Wi-Fi:
-  `uv run python scripts/probe_gateway.py` — a `200` on campus but a timeout at
-  home means the API is now Duke-network-only; a timeout on campus too means
-  it is still down. Either way he then emails **aisuitesupport@duke.edu**
-  (draft already given). Don't re-diagnose from scratch — run the probe.
+- **Duke AI Gateway: back as of 2026-11-06.** After the 2026-09-07 outage it
+  was unreachable off-campus for ~2 months (dashboard worked, API host
+  TCP-timed-out). On Nov 6 `scripts/probe_gateway.py` from Jack's home network
+  (Spectrum, not Duke) returned 200 with 41 models listed, and a real chat call
+  succeeded. The current key in `.env` works.
+- **Live demo still runs on Cloudflare Workers AI** (`@cf/zai-org/glm-5.3-flash`)
+  until Jack decides whether to switch it back to Duke. To switch back, see
+  Run / verify. Local dev uses Duke.
 
 ## Standing rules (owner's instructions — do not drift)
 
