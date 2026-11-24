@@ -15,10 +15,9 @@ interface Env {
   DAILY_CAP?: string;
 }
 
-// The container's own internet access fails (seen 2026-11-24: every provider
-// call errored in ~0.2s), but the Worker can reach Workers AI. So the container
-// calls this plain-http pseudo-host and the Worker forwards the request to
-// FALLBACK_BASE_URL, adding the real key. The key never enters the container.
+// The container calls this plain-http pseudo-host and the Worker forwards the
+// request to FALLBACK_BASE_URL, adding the real key, so the Workers AI key
+// never enters the container.
 const FALLBACK_RELAY_HOST = "fallback.relay";
 
 export class FixMyEnglishContainer extends Container<Env> {

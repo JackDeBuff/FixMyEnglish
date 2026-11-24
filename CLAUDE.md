@@ -22,15 +22,23 @@ decision history: `~/.claude/plans/nevermind-i-have-my-bubbly-planet.md`.
   `FALLBACK_*` and skips Duke for `PRIMARY_COOLDOWN_S` (600s). The API response
   carries `"provider"`.
 - **Live demo fallback = Workers AI `@cf/zai-org/glm-5.3` via a Worker relay**
-  (2026-11-24). Two things broke at once that day: `glm-5.3-flash` was retired
-  from the Workers AI catalog, and the container's own outbound calls started
-  failing in ~0.2s (both providers), while the Worker could still reach Workers
-  AI. Fix: the container calls `http://fallback.relay`, and the Worker's
-  `outboundByHost` forwards to `FALLBACK_BASE_URL` with the real key (needs
-  `@cloudflare/containers` ≥0.3 and `export { ContainerProxy }`). The Workers AI
-  key never enters the container. Owner uses it ~5–6×/day; `DAILY_CAP=30` on the
-  live demo keeps even a full capped day inside the free 10k Neurons
-  (glm-5.3 ≈ 130–300 Neurons per fix). Owner's rule: best model that costs $0.
+  (2026-11-24). Root cause that day, confirmed in the container logs
+  (dashboard → Containers → app → Logs): Workers AI returned **410 "Model has
+  been deprecated: glm-5.3-flash was deprecated on 2026-11-20"**. The container's
+  network was fine. I first misread instant failures as "container egress is
+  broken"; those were requests still served by the **old instance** during a
+  rollout (stale env). The relay was built on that wrong theory, but it's kept
+  because it works and is safer: the container calls `http://fallback.relay`,
+  and the Worker's `outboundByHost` forwards to `FALLBACK_BASE_URL` with the
+  real key (needs `@cloudflare/containers` ≥0.3 and `export { ContainerProxy }`),
+  so the Workers AI key never enters the container. Owner uses it ~5–6×/day;
+  `DAILY_CAP=30` keeps a full capped day inside the free 10k Neurons (glm-5.3 ≈
+  130–300 Neurons per fix). Owner's rule: best model that costs $0.
+- **Diagnose the live demo from the container logs first.** The Cloudflare
+  dashboard has them (Containers → fixmyenglish-fixmyenglishcontainer → Logs;
+  filter message "provider failed"). Jack has to be signed in to Cloudflare in
+  Chrome. Before trusting any live test after a deploy, confirm the instance's
+  CREATED time is newer than the deploy.
 
 ## Standing rules (owner's instructions — do not drift)
 
