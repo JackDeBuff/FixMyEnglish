@@ -21,24 +21,26 @@ decision history: `~/.claude/plans/nevermind-i-have-my-bubbly-planet.md`.
   = Duke (`gpt-6-luna`, 5s connect timeout, no retries); on any failure it tries
   `FALLBACK_*` and skips Duke for `PRIMARY_COOLDOWN_S` (600s). The API response
   carries `"provider"`.
-- **Live demo fallback = Workers AI `@cf/zai-org/glm-5.3` via a Worker relay**
-  (2026-11-24). Root cause that day, confirmed in the container logs
-  (dashboard → Containers → app → Logs): Workers AI returned **410 "Model has
-  been deprecated: glm-5.3-flash was deprecated on 2026-11-20"**. The container's
-  network was fine. I first misread instant failures as "container egress is
-  broken"; those were requests still served by the **old instance** during a
-  rollout (stale env). The relay was built on that wrong theory, but it's kept
-  because it works and is safer: the container calls `http://fallback.relay`,
-  and the Worker's `outboundByHost` forwards to `FALLBACK_BASE_URL` with the
-  real key (needs `@cloudflare/containers` ≥0.3 and `export { ContainerProxy }`),
-  so the Workers AI key never enters the container. Owner uses it ~5–6×/day;
-  `DAILY_CAP=30` keeps a full capped day inside the free 10k Neurons (glm-5.3 ≈
-  130–300 Neurons per fix). Owner's rule: best model that costs $0.
+- **Live demo fallback = Workers AI `@cf/zai-org/glm-5.3`, called directly
+  from the container** (2026-11-24). Root cause that day, from the container
+  logs: Workers AI answered **410 "glm-5.3-flash was deprecated on
+  2026-11-20"**. The container's network was always fine.
+  **Don't add a Worker relay (`outboundByHost`) again, and don't upgrade
+  `@cloudflare/containers` past 0.0.28 without testing a container restart.**
+  I tried both that day. The relay only worked on the first start after a
+  deploy; after the container slept and woke, requests to the pseudo-host
+  leaked to the real internet (Cloudflare 1016 DNS error). With the relay
+  removed but the library still at 0.3.7, direct calls failed with
+  `APIConnectionError`. Reverting to 0.0.28 / wrangler 4.126.0 fixed it.
+  Owner uses it ~5–6×/day; `DAILY_CAP=30` keeps a full capped day inside the
+  free 10k Neurons (glm-5.3 ≈ 130–300 Neurons per fix). Owner's rule: best
+  model that costs $0.
 - **Diagnose the live demo from the container logs first.** The Cloudflare
   dashboard has them (Containers → fixmyenglish-fixmyenglishcontainer → Logs;
   filter message "provider failed"). Jack has to be signed in to Cloudflare in
-  Chrome. Before trusting any live test after a deploy, confirm the instance's
-  CREATED time is newer than the deploy.
+  Chrome. The instance list's CREATED column does NOT change when the
+  container restarts, so it can't tell you whether a test hit the new
+  container. The logs can: check which model/URL the failing call used.
 
 ## Standing rules (owner's instructions — do not drift)
 
@@ -89,13 +91,13 @@ docker build -t fixmyenglish . && docker run --env-file .env -p 7860:7860 fixmye
   plan and is dead: Docker/Gradio Spaces on free CPU now require PRO (402) —
   the README documents this. Live URL: fixmyenglish.supawich.workers.dev.
 - **Live demo config:** `cloudflare/wrangler.jsonc` vars `FALLBACK_BASE_URL`
-  (Workers AI OpenAI-compatible endpoint, used by the Worker relay only),
-  `FALLBACK_MODEL` (`@cf/zai-org/glm-5.3`), `FALLBACK_EXTRA_BODY`
-  (`reasoning_effort: low`), `DAILY_CAP` (`30`), plus Worker secrets
-  `DUKE_AI_GATEWAY_KEY` and `FALLBACK_API_KEY` (Cloudflare token
-  `fixmyenglish-workers-ai`, Workers-AI-Read, rolled 2026-11-06). Workers AI
-  retires models: if the live demo 502s in under a second, run
-  `npx wrangler ai models | grep <model>` before anything else.
+  (Workers AI OpenAI-compatible endpoint), `FALLBACK_MODEL`
+  (`@cf/zai-org/glm-5.3`), `FALLBACK_EXTRA_BODY` (`reasoning_effort: low`),
+  `DAILY_CAP` (`30`), plus Worker secrets `DUKE_AI_GATEWAY_KEY` and
+  `FALLBACK_API_KEY` (Cloudflare token `fixmyenglish-workers-ai`,
+  Workers-AI-Read, rolled 2026-11-06). Workers AI retires models: if the live
+  demo 502s in under a second, check the container logs, then
+  `npx wrangler ai models | grep <model>`.
 - **A deploy that only changes the Worker does not restart the running
   container**, so the container keeps its old env vars and its in-memory Duke
   cooldown. To force a fresh instance, change container config (e.g. flip

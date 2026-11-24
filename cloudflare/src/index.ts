@@ -1,8 +1,5 @@
 import { Container } from "@cloudflare/containers";
 
-// Required for the container's outbound requests to reach outboundByHost below.
-export { ContainerProxy } from "@cloudflare/containers";
-
 interface Env {
   FIXMYENGLISH: DurableObjectNamespace<FixMyEnglishContainer>;
   DUKE_AI_GATEWAY_KEY: string;
@@ -15,36 +12,20 @@ interface Env {
   DAILY_CAP?: string;
 }
 
-// The container calls this plain-http pseudo-host and the Worker forwards the
-// request to FALLBACK_BASE_URL, adding the real key, so the Workers AI key
-// never enters the container.
-const FALLBACK_RELAY_HOST = "fallback.relay";
-
 export class FixMyEnglishContainer extends Container<Env> {
   defaultPort = 7860;
   sleepAfter = "15m";
-  enableInternet = true; // still lets the app try Duke directly first
+  enableInternet = true; // outbound calls to Duke and the fallback provider
   envVars = Object.fromEntries(
     Object.entries({
       DUKE_AI_GATEWAY_KEY: this.env.DUKE_AI_GATEWAY_KEY,
-      FALLBACK_BASE_URL: `http://${FALLBACK_RELAY_HOST}`,
-      FALLBACK_API_KEY: "injected-by-worker", // non-empty so the app enables the fallback
+      FALLBACK_BASE_URL: this.env.FALLBACK_BASE_URL,
+      FALLBACK_API_KEY: this.env.FALLBACK_API_KEY,
       FALLBACK_MODEL: this.env.FALLBACK_MODEL,
       FALLBACK_EXTRA_BODY: this.env.FALLBACK_EXTRA_BODY,
       DAILY_CAP: this.env.DAILY_CAP,
     }).filter(([, v]) => v !== undefined),
   ) as Record<string, string>;
-
-  static outboundByHost = {
-    [FALLBACK_RELAY_HOST]: async (request: Request, env: Env) => {
-      const incoming = new URL(request.url);
-      const target = `${env.FALLBACK_BASE_URL}${incoming.pathname}${incoming.search}`;
-      const relayed = new Request(target, request);
-      relayed.headers.delete("host");
-      relayed.headers.set("Authorization", `Bearer ${env.FALLBACK_API_KEY}`);
-      return fetch(relayed);
-    },
-  };
 }
 
 export default {
