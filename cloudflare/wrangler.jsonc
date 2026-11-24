@@ -10,8 +10,11 @@
   // the app retries once on Cloudflare Workers AI (FALLBACK_API_KEY secret).
   "vars": {
     "FALLBACK_BASE_URL": "https://api.cloudflare.com/client/v4/accounts/c16fa88f21cff530d60475dc28c00e7e/ai/v1",
-    "FALLBACK_MODEL": "@cf/zai-org/glm-5.3-flash",
-    "FALLBACK_EXTRA_BODY": "{\"reasoning_effort\": \"low\"}"
+    "FALLBACK_MODEL": "@cf/zai-org/glm-5.3",
+    "FALLBACK_EXTRA_BODY": "{\"reasoning_effort\": \"low\"}",
+    // glm-5.3 costs ~9x the old flash model per fix; 30/day keeps even a full
+    // day at the cap inside Workers AI's free 10k Neurons/day.
+    "DAILY_CAP": "30"
   },
   "containers": [
     {

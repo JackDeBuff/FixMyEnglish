@@ -74,8 +74,11 @@ addresses but times out from Cloudflare's server network (both Workers and
 Containers). Containers also have IPv6-only egress, and the Gateway has no IPv6
 address. The live demo's fallback is
 [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/)
-(`@cf/zai-org/glm-5.3-flash`, `reasoning_effort: low`); see
-`cloudflare/wrangler.jsonc`.
+(`@cf/zai-org/glm-5.3`, `reasoning_effort: low`), reached through the Worker:
+the container sends its fallback calls to the Worker, which adds the API key
+and forwards them, so the key never enters the container. The live demo caps
+usage at 30 fixes a day to stay inside Workers AI's free tier. See
+`cloudflare/`.
 
 ## Deployment — and why it's not a Hugging Face Space
 

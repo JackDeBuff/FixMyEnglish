@@ -12,17 +12,25 @@ decision history: `~/.claude/plans/nevermind-i-have-my-bubbly-planet.md`.
 
 - **Assignment: submitted and graded-as-is.** Any change now is maintenance,
   not rubric work — keep the graded surface (lockfile, Dockerfile, app) stable.
-- **Duke AI Gateway: back as of 2026-11-06, for most networks.** It answers
-  home ISPs and Cloudflare WARP addresses, but still times out from Cloudflare's
-  server network. Tested 2026-11-06: a Worker `fetch` to it returned 522 after
-  about 20s, and Containers egress over IPv6 only while the Gateway has no IPv6
-  address. A relay through the Worker (`outboundByHost`) was tried and doesn't
-  help, because the Worker can't reach Duke either. Don't retry it.
+- **Duke AI Gateway: down again as of 2026-11-24**, from home Wi-Fi too (TCP
+  timeout, WARP off), while status.oit.duke.edu says "operational", the same
+  mismatch as September. Even when it's up, it times out from Cloudflare's
+  server network (Worker fetch got 522, 2026-11-06), so the live demo can't use
+  it either way. Local/Docker runs are broken until Duke is back; no code fix.
 - **The app is Duke-first with a fallback** (`app/llm.py`, 2026-11-06): primary
   = Duke (`gpt-6-luna`, 5s connect timeout, no retries); on any failure it tries
   `FALLBACK_*` and skips Duke for `PRIMARY_COOLDOWN_S` (600s). The API response
-  carries `"provider"`. Local/Docker: primary answers. Live demo: fallback
-  (Workers AI GLM-5.3 Flash) every time, for the network reason above.
+  carries `"provider"`.
+- **Live demo fallback = Workers AI `@cf/zai-org/glm-5.3` via a Worker relay**
+  (2026-11-24). Two things broke at once that day: `glm-5.3-flash` was retired
+  from the Workers AI catalog, and the container's own outbound calls started
+  failing in ~0.2s (both providers), while the Worker could still reach Workers
+  AI. Fix: the container calls `http://fallback.relay`, and the Worker's
+  `outboundByHost` forwards to `FALLBACK_BASE_URL` with the real key (needs
+  `@cloudflare/containers` ≥0.3 and `export { ContainerProxy }`). The Workers AI
+  key never enters the container. Owner uses it ~5–6×/day; `DAILY_CAP=30` on the
+  live demo keeps even a full capped day inside the free 10k Neurons
+  (glm-5.3 ≈ 130–300 Neurons per fix). Owner's rule: best model that costs $0.
 
 ## Standing rules (owner's instructions — do not drift)
 
@@ -73,12 +81,13 @@ docker build -t fixmyenglish . && docker run --env-file .env -p 7860:7860 fixmye
   plan and is dead: Docker/Gradio Spaces on free CPU now require PRO (402) —
   the README documents this. Live URL: fixmyenglish.supawich.workers.dev.
 - **Live demo config:** `cloudflare/wrangler.jsonc` vars `FALLBACK_BASE_URL`
-  (Workers AI OpenAI-compatible endpoint), `FALLBACK_MODEL`
-  (`@cf/zai-org/glm-5.3-flash`), `FALLBACK_EXTRA_BODY` (`reasoning_effort: low`;
-  without it a fix takes ~30s), plus Worker secrets `DUKE_AI_GATEWAY_KEY` and
-  `FALLBACK_API_KEY` (the Cloudflare token `fixmyenglish-workers-ai`,
-  Workers-AI-Read, rolled 2026-11-06). Free tier: 10k Neurons/day ≈ 690 fixes;
-  `DAILY_CAP=300` keeps it unbillable.
+  (Workers AI OpenAI-compatible endpoint, used by the Worker relay only),
+  `FALLBACK_MODEL` (`@cf/zai-org/glm-5.3`), `FALLBACK_EXTRA_BODY`
+  (`reasoning_effort: low`), `DAILY_CAP` (`30`), plus Worker secrets
+  `DUKE_AI_GATEWAY_KEY` and `FALLBACK_API_KEY` (Cloudflare token
+  `fixmyenglish-workers-ai`, Workers-AI-Read, rolled 2026-11-06). Workers AI
+  retires models: if the live demo 502s in under a second, run
+  `npx wrangler ai models | grep <model>` before anything else.
 - **A deploy that only changes the Worker does not restart the running
   container**, so the container keeps its old env vars and its in-memory Duke
   cooldown. To force a fresh instance, change container config (e.g. flip
